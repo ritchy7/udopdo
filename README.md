@@ -18,8 +18,8 @@ L'équipe a remarqué que leurs utilisateurs voulaient bien changer leur aliment
 ## Description du parcours utilisateur
 L'utilisateur est sur le terminal. Ce dernier lui affiche les choix suivants :
 
-1 - Quel aliment souhaitez-vous remplacer ? 
-2 - Retrouver mes aliments substitués.
+- 1 - Quel aliment souhaitez-vous remplacer ? 
+- 2 - Retrouver mes aliments substitués.
 
 L'utilisateur sélectionne 1. Le programme pose les questions suivantes à l'utilisateur et ce dernier sélectionne les réponses :
 
