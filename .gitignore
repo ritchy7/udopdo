@@ -1,3 +1,4 @@
+.DS_STORE
 Pipfile.lock
 # Byte-compiled / optimized / DLL files
 __pycache__/
