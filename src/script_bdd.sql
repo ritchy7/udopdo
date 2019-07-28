@@ -6,10 +6,9 @@ GRANT ALL PRIVILEGES ON yuka_like.* TO 'vagrant'@'localhost' IDENTIFIED BY '1234
 CREATE DATABASE yuka_like CHARACTER SET 'utf8';
 
 /* Tables creation */
-
 CREATE TABLE IF NOT EXISTS Product (
-    id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    product_id INT NOT NULL,
+    id SMALLINT UNSIGNED AUTO_INCREMENT,
+    product_id INT UNIQUE NOT NULL,
     product_name VARCHAR(200),
     img_url TEXT,
     salt VARCHAR(10),
@@ -24,8 +23,11 @@ CREATE TABLE IF NOT EXISTS Product (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS History (
-    id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    product_id INT NOT NULL,
+    id SMALLINT UNSIGNED AUTO_INCREMENT,
+    product_id INT UNIQUE NOT NULL,
+    CONSTRAINT fk_product_id
+        FOREIGN KEY (product_id)
+        REFERENCES Product(product_id),
 
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
