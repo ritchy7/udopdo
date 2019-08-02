@@ -1,9 +1,9 @@
+/* Database creation */
+CREATE DATABASE openfoodfacts CHARACTER SET 'utf8';
+
 /* User creation */
 /*CREATE USER 'vagrant'@'localhost' IDENTIFIED BY '1234';
-GRANT ALL PRIVILEGES ON yuka_like.* TO 'vagrant'@'localhost' IDENTIFIED BY '1234';*/
-
-/* Database creation */
-CREATE DATABASE yuka_like CHARACTER SET 'utf8';
+GRANT ALL PRIVILEGES ON openfoodfacts.* TO 'vagrant'@'localhost' IDENTIFIED BY '1234';*/
 
 /* Tables creation */
 CREATE TABLE IF NOT EXISTS Product (
