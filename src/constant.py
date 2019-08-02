@@ -9,5 +9,5 @@ CINFO = {
     'host' : 'localhost',
     'user' : 'vagrant',
     'passwd' : '1234',
-    'database' : 'yuka_like'
+    'database' : 'openfoodfacts'
 }
