@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS Product (
     salt VARCHAR(10),
     fat VARCHAR(10),
     sugars VARCHAR(10),
-    satured_fat VARCHAR(10),
+    saturated_fat VARCHAR(10),
     warehouse VARCHAR(30),
     allergens VARCHAR(30),
     categories VARCHAR(200),
