@@ -6,6 +6,13 @@ import requests
 from constant import MESSAGE_PROMPT
 
 
+def select_category():
+    """
+    Select a category.
+    """
+    print('Select the category')
+
+
 def select_food():
     """
     Select a food.
@@ -63,7 +70,7 @@ def ask_choice(message):
 if __name__ == '__main__':
     choice = ask_choice(MESSAGE_PROMPT)
     if choice == '1':
-        pass
+        select_category()
     elif choice == '2':
         select_food()
     elif choice == '3':
