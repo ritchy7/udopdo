@@ -6,6 +6,13 @@ import requests
 from constant import MESSAGE_PROMPT
 
 
+def select_food():
+    """
+    Select a food.
+    """
+    print('Select the food')
+
+
 def update_database():
     """
     Update the database.
@@ -58,7 +65,7 @@ if __name__ == '__main__':
     if choice == '1':
         pass
     elif choice == '2':
-        pass
+        select_food()
     elif choice == '3':
         update_database()
     else:
