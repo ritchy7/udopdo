@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS Product (
     saturated_fat VARCHAR(10),
     warehouse VARCHAR(100),
     allergens VARCHAR(100),
-    category SMALLINT UNSIGNED UNIQUE NOT NULL,
+    category SMALLINT UNSIGNED NOT NULL,
     CONSTRAINT fk_category_id
         FOREIGN KEY (category)
         REFERENCES Category(id),
