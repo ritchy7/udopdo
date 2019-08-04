@@ -6,6 +6,13 @@ CREATE DATABASE openfoodfacts CHARACTER SET 'utf8';
 GRANT ALL PRIVILEGES ON openfoodfacts.* TO 'vagrant'@'localhost' IDENTIFIED BY '1234';*/
 
 /* Tables creation */
+CREATE TABLE IF NOT EXISTS Category (
+    id SMALLINT UNSIGNED AUTO_INCREMENT,
+    category_name VARCHAR(200),
+
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS Product (
     id SMALLINT UNSIGNED AUTO_INCREMENT,
     product_name VARCHAR(200),
@@ -17,16 +24,9 @@ CREATE TABLE IF NOT EXISTS Product (
     warehouse VARCHAR(100),
     allergens VARCHAR(100),
     category SMALLINT UNSIGNED UNIQUE NOT NULL,
-
-    PRIMARY KEY (id)
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS Category (
-    id SMALLINT UNSIGNED AUTO_INCREMENT,
-    category_name VARCHAR(200),
     CONSTRAINT fk_category_id
-        FOREIGN KEY (id)
-        REFERENCES Product(category),
+        FOREIGN KEY (category)
+        REFERENCES Category(id),
 
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
