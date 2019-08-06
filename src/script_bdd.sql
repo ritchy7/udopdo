@@ -1,5 +1,5 @@
 /* Database creation */
-CREATE DATABASE openfoodfacts CHARACTER SET 'utf8';
+/* CREATE DATABASE openfoodfacts CHARACTER SET 'utf8'; */
 
 /* User creation */
 /*CREATE USER 'vagrant'@'localhost' IDENTIFIED BY '1234';
@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS Product (
     fat VARCHAR(10),
     sugars VARCHAR(10),
     saturated_fat VARCHAR(10),
-    warehouse VARCHAR(100),
-    allergens VARCHAR(100),
+    warehouse TEXT,
+    allergens TEXT,
     category SMALLINT UNSIGNED NOT NULL,
     CONSTRAINT fk_category_id
         FOREIGN KEY (category)
