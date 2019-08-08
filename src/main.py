@@ -31,6 +31,12 @@ def update_database(cinfo):
     try:
         openfoodfact_db = connect(**cinfo)
         cursor = openfoodfact_db.cursor()
+        # Drop the tables.
+        drop_query = "DELETE FROM {};"
+        tables = ['History', 'Product', 'Category']
+        for table in tables:
+            cursor.execute(drop_query.format(table))
+        openfoodfact_db.commit()
         categories_query = 'INSERT INTO Category (category_name) VALUES (%s);'
         products_query = """
             INSERT INTO Product (product_name, img_url, salt, fat,
@@ -42,11 +48,13 @@ def update_database(cinfo):
         exit()
     response = requests.get('https://fr.openfoodfacts.org/categories.json').json()
     # Browse all categories.
-    print('Database sync started.')
-    for category in response['tags']:
+    print('Database sync started..')
+    print(100 * '=')
+    for category_number ,category in enumerate(response['tags']):
         category_name = category['name']
         total_page = ceil(category['products'] / 20)
         url = category['url']
+        # Limit to 200 products per category.
         if total_page > 10:
             total_page = 10
         page = 1
@@ -61,32 +69,31 @@ def update_database(cinfo):
             response = requests.get(f'{url}/{page}.json').json()
             # Add all products into a huge list.
             for p in response['products']:
-                products.append([
-                    p['product_name'] if 'product_name' in p else None,
-                    p['image_url'] if 'image_url' in p else None,
-                    p['nutrient_levels']['salt'] if 'salt' in\
-                        p['nutrient_levels'] else None,
-                    p['nutrient_levels']['fat'] if 'fat' in\
-                         p['nutrient_levels'] else None,
-                    p['nutrient_levels']['sugars'] if 'sugars' in\
-                        p['nutrient_levels'] else None,
-                    p['nutrient_levels']['saturated-fat'] if 'saturated-fat'\
-                        in p else None,
-                    p['brands'] if 'brands' in p else None,
-                    p['allergens'] if 'allergens' in p else None,
+                products.append((
+                    p.get('product_name'),
+                    p.get('image_url'),
+                    p['nutrient_levels'].get('salt'),
+                    p['nutrient_levels'].get('fat'),
+                    p['nutrient_levels'].get('sugars'),
+                    p['nutrient_levels'].get('saturated-fat'),
+                    p.get('brands'),
+                    p.get('allergens'),
                     category_id
-                ])
-            # Insert all the products for a category.
+                ))
+            # Insert all the products for a category into 'Product' table.
             try:
-                cursor.executemany(query, products)
+                cursor.executemany(products_query, products)
                 openfoodfact_db.commit()
             except Exception as e:
                 print('error:', e)
                 exit()
             page += 1
-        break
+        if category_number >= 20:
+            break
+        print(100 * '=')
     cursor.close()
     openfoodfact_db.close()
+    print("Database sync finished")
 
 
 def ask_choice(message):
@@ -113,8 +120,7 @@ if __name__ == '__main__':
     elif choice == '3':
         update_database(CINFO)
     elif choice == 'q':
-        print('\nYou\'ve choice to exit the program\nExit\n')
+        print('\nYou\'ve choice to exit the program\Bye bye\n')
     else:
         print('ERROR DURING CHOICE')
         exit()
-
