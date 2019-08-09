@@ -84,8 +84,9 @@ class OpenFoodFacts:
         """
         products_query = """
             INSERT INTO Product (product_name, img_url, salt, fat,
-            sugars, saturated_fat, warehouse, allergens, category)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+            sugars, saturated_fat, warehouse, allergens, nutrition_grades,
+            category)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         products = list()
         total_page = ceil(product_number / 20)
@@ -108,6 +109,7 @@ class OpenFoodFacts:
                     p['nutrient_levels'].get('saturated-fat'),
                     p.get('brands'),
                     p.get('allergens'),
+                    p.get('nutrition_grades'),
                     self.category_id
                 )
                 for p in response['products']
