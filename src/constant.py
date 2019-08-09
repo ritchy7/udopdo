@@ -6,8 +6,8 @@ MESSAGE_PROMPT = '-------------------------------------------\n'\
                 '-------------------------------------------\n'
 
 CINFO = {
-    'host' : 'localhost',
-    'user' : 'vagrant',
-    'passwd' : '1234',
-    'database' : 'openfoodfacts'
+    'host': 'localhost',
+    'user': 'vagrant',
+    'passwd': '1234',
+    'database': 'openfoodfacts'
 }
