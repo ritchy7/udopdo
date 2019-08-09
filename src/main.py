@@ -7,7 +7,7 @@ if __name__ == '__main__':
     # Init the connection.
     openfoodfacts.init_connection(CINFO)
     # Ask for a choice.
-    openfoodfacts.ask_choice()
+    openfoodfacts.menu_choice()
     choice = openfoodfacts.choice
     if choice == 1:
         openfoodfacts.select_category()
@@ -15,3 +15,4 @@ if __name__ == '__main__':
         pass
     elif choice == 3:
         openfoodfacts.update_database()
+        openfoodfacts.menu_choice()
