@@ -42,11 +42,11 @@ class OpenFoodFacts:
         """
         print('Select the category')
 
-    def select_food(self):
+    def select_product(self):
         """
-        Select a food.
+        Select a product.
         """
-        print('Select the food')
+        print('Select a product')
 
     def init_connection(self, cinfo):
         """
