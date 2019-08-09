@@ -142,7 +142,8 @@ class OpenFoodFacts:
         """
         Update the database.
         """
-        response = requests.get('https://fr.openfoodfacts.org/categories.json').json()
+        categories_url = 'https://fr.openfoodfacts.org/categories.json'
+        response = requests.get(categories_url).json()
         # Browse all categories.
         print('Database sync started..')
         print(100 * '=')
