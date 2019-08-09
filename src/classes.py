@@ -6,21 +6,19 @@ import requests
 
 class OpenFoodFacts:
 
-    def __init__(self, ):
+    def __init__(self):
         self.category_id = None
         self.choice = None
         self.cursor = None
         self.database = None
 
-    def ask_choice(self):
+    def menu_choice(self):
         """
         Ask for choice in the main menu.
         """
         choice = None
-
         while True:
             choice = input(MESSAGE_PROMPT)
-
             if choice == '1':
                 self.choice = 1
                 break
@@ -31,7 +29,7 @@ class OpenFoodFacts:
                 self.choice = 3
                 break
             elif choice == 'q':
-                print('\nYou\'ve choice to exit the program\Bye bye\n')
+                print('\nYou\'ve choice to exit the program\nBye bye\n')
                 break
             else:
                 print(f'\'{choice}\' n\'est pas valide.\n')
@@ -89,13 +87,14 @@ class OpenFoodFacts:
             sugars, saturated_fat, warehouse, allergens, category)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
+        products = list()
         total_page = ceil(product_number / 20)
         # Limit to 200 products per category.
-        if total_page > 10:
+        if total_page >= 10:
             total_page = 10
         page = 1
         # Browse all pages of a category.
-        while page <= total_page:
+        for page in range(1, total_page):
             print(f'Page : {page}')
             response = requests.get(f'{url}/{page}.json').json()
             # Add all products into a huge list.
@@ -113,14 +112,13 @@ class OpenFoodFacts:
                 )
                 for p in response['products']
             ]
-            # Insert all the products for a category into 'Product' table.
-            try:
-                self.cursor.executemany(products_query, products)
-                self.database.commit()
-            except Exception as e:
-                print('error:', e)
-                exit()
-            page += 1
+        # Insert all the products for a category into 'Product' table.
+        try:
+            self.cursor.executemany(products_query, products)
+            self.database.commit()
+        except Exception as e:
+            print('error:', e)
+            exit()
 
     def insert_category(self, category_name):
         """
