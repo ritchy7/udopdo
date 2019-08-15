@@ -46,6 +46,7 @@ class OpenFoodFacts:
         ])
         menu_message = f'Select a category :\n{categories}\n\nq - Quitter.\n\n'
         category_query = 'SELECT * FROM Product WHERE category = {};'
+        # Show all categories.
         while True:
             print(50 * '-')
             menu_choice = input(menu_message)
@@ -55,6 +56,7 @@ class OpenFoodFacts:
             elif menu_choice not in categories:
                 print(f'category number {menu_choice} is not valid')
             else:
+                # Show all products in a category.
                 try:
                     self.cursor.execute(category_query.format(menu_choice))
                     products = self.cursor.fetchall()
@@ -93,7 +95,7 @@ class OpenFoodFacts:
             drop_query = "DELETE FROM {0};"
             reset_auto_increment = 'ALTER TABLE {0} AUTO_INCREMENT = 1;'
             tables = ['History', 'Product', 'Category']
-            # Drop the tables and reset the auto increment start number.
+            # Drop the tables and reset the auto increment start number to 1.
             for table in tables:
                 self.cursor.execute(drop_query.format(table))
                 self.cursor.execute(reset_auto_increment.format(table))
@@ -106,8 +108,8 @@ class OpenFoodFacts:
         """
         Insert all products off each category into the database.
 
-        :param product_number:  Number of product.
-        :param url:             Category url.
+        :param product_number (string):  Number of product.
+        :param url (string):             Category url.
         """
         products_query = """
             INSERT INTO Product (product_name, img_url, salt, fat,
@@ -153,7 +155,7 @@ class OpenFoodFacts:
         """
         Insert a category into the database.
 
-        :param category_name:   category's name.
+        :param category_name (string):   category's name.
         """
         categories_query = 'INSERT INTO Category (category_name) VALUES (%s);'
         try:
@@ -174,10 +176,13 @@ class OpenFoodFacts:
         # Browse all categories.
         print('Database sync started..')
         print(100 * '=')
+        # Clean the database.
         self.drop_tables()
+        # Re-insert all categories and their products in the database.
         for category_number, category in enumerate(response['tags']):
             self.insert_category(category['name'])
             self.insert_products(category['products'], category['url'])
+            # Limit category number to 20.
             if category_number == 20:
                 break
             print(100 * '=')
