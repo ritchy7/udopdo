@@ -13,6 +13,66 @@ class OpenFoodFacts:
         self.cinfo = cinfo
         self.cursor = None
         self.database = None
+        self.products = None
+
+    def init_connection(self):
+        """
+        Initalize the connection.
+        """
+        # Init the connection with the database.
+        try:
+            self.database = connect(**self.cinfo)
+            self.cursor = self.database.cursor(buffered=True)
+        except Exception as err:
+            print(f'Error during the connection:\n{err}\nexit\n')
+            sys.exit(1)
+
+    def quit(self):
+        """
+        Exit the program.
+        """
+        print('\nYou\'ve decided to leave\nBye bye\n')
+        sys.exit(0)
+
+    def drop_tables(self):
+        """
+        drop all tables.
+        """
+        try:
+            drop_query = 'DELETE FROM {0};'
+            reset_auto_increment = 'ALTER TABLE {0} AUTO_INCREMENT = 1;'
+            tables = ['History', 'Product', 'Category']
+            # Drop the tables and reset the auto increment start number to 1.
+            for table in tables:
+                self.cursor.execute(drop_query.format(table))
+                self.cursor.execute(reset_auto_increment.format(table))
+                self.database.commit()
+        except Exception as err:
+            print(f'Error during droping tables:\n{err}\nexit\n')
+            sys.exit(1)
+
+    def update_database(self):
+        """
+        Update the database.
+        """
+        categories_url = 'https://fr.openfoodfacts.org/categories.json'
+        response = requests.get(categories_url).json()
+        # Browse all categories.
+        print('Database sync started..')
+        print(100 * '=')
+        # Clean the database.
+        self.drop_tables()
+        # Re-insert all categories and their products in the database.
+        for category_number, category in enumerate(response['tags']):
+            self.insert_category(category['name'])
+            self.insert_products(category['products'], category['url'])
+            # Limit category number to 20.
+            if category_number == 20:
+                break
+            print(100 * '=')
+        self.cursor.close()
+        self.database.close()
+        print("Database sync finished")
 
     def main_selection_menu(self):
         """
@@ -30,9 +90,8 @@ class OpenFoodFacts:
             elif main_menu_choice == '3':
                 self.main_menu_choice = 3
                 break
-            elif main_menu_choice == 'q':
-                print('\nYou\'ve decided to leave\nBye bye\n')
-                break
+            elif main_menu_choice == 'Q':
+                self.quit()
             else:
                 print(f'\'{main_menu_choice}\' n\'est pas valide.\n')
 
@@ -44,65 +103,69 @@ class OpenFoodFacts:
         categories = '\n'.join([
             f'{k} - {v}' for k, v in dict(self.cursor.fetchall()).items()
         ])
-        menu_message = f'Select a category :\n{categories}\n\nq - Quitter.\n\n'
+        menu_message = f'Select a category :\n{categories}\n\nQ - Quitter.\n\n'
         category_query = 'SELECT * FROM Product WHERE category = {};'
         # Show all categories.
         while True:
             print(50 * '-')
             menu_choice = input(menu_message)
-            if menu_choice == 'q':
-                print('\nYou\'ve decided to leave\nBye bye\n')
-                break
+            if menu_choice == 'Q':
+                self.quit()
             elif menu_choice not in categories:
                 print(f'category number {menu_choice} is not valid')
             else:
                 # Show all products in a category.
                 try:
                     self.cursor.execute(category_query.format(menu_choice))
-                    products = self.cursor.fetchall()
+                    self.products = self.cursor.fetchall()
                     self.cursor.close()
                     self.database.commit()
-                    self.product_selection_menu(products)
+                    self.product_selection_menu()
                 except Exception as e:
                     print(f'Error during category selection: {e}')
                 self.init_connection()
 
-    def product_selection_menu(self, products):
+    def product_selection_menu(self):
         """
         Select a product.
-
-        :param products (list):    Product list.
         """
-        print(len(products))
-
-    def init_connection(self):
-        """
-        Initalize the connection.
-        """
-        # Init the connection with the database.
-        try:
-            self.database = connect(**self.cinfo)
-            self.cursor = self.database.cursor(buffered=True)
-        except Exception as err:
-            print(f'Error during the connection:\n{err}\nexit\n')
-            sys.exit(1)
-
-    def drop_tables(self):
-        """
-        drop all tables.
-        """
-        try:
-            drop_query = "DELETE FROM {0};"
-            reset_auto_increment = 'ALTER TABLE {0} AUTO_INCREMENT = 1;'
-            tables = ['History', 'Product', 'Category']
-            # Drop the tables and reset the auto increment start number to 1.
-            for table in tables:
-                self.cursor.execute(drop_query.format(table))
-                self.cursor.execute(reset_auto_increment.format(table))
-                self.database.commit()
-        except Exception as err:
-            print(f'Error during droping tables:\n{err}\nexit\n')
-            sys.exit(1)
+        max_page = len(self.products)
+        products = [{
+            'id': p[0], 'name': p[1], 'img': p[2], 'salt': p[3],
+            'fat': p[4], 'sugars': p[5], 'saturated_fat': p[6],
+            'warehouse': p[7], 'allergens': p[8],
+            'nutrition grades': p[9]
+        } for p in self.products]
+        # Show all products per pagination.
+        start = 0
+        end = 10
+        while True:
+            print(50 * '-')
+            message_products = '\n'.join([
+                f"{p['id']} - {p['name']}" for p in products[start:end]
+            ])
+            menu_message = f'Select a product:\n{message_products}\n\n'
+            menu_message += f'p - previous page | n - next page\n\n'
+            menu_message += f'P - Back to categorie menu\nQ - Quitter.\n\n'
+            menu_choice = input(menu_message)
+            if menu_choice == 'Q':
+                self.quit()
+            elif menu_choice == 'P':
+                break
+            elif menu_choice == 'n':
+                end += 10
+                start += 10
+                if end > max_page:
+                    end = max_page
+                    start = max_page - 10
+            elif menu_choice == 'p':
+                start -= 10
+                end -= 10
+                if start < 0:
+                    end = 10
+                    start = 0
+            else:
+                pass
 
     def insert_products(self, product_number, url):
         """
@@ -166,26 +229,3 @@ class OpenFoodFacts:
         except Exception as e:
             print(f'Error during category insertion:\n{e}\nexit\n')
             sys.exit(1)
-
-    def update_database(self):
-        """
-        Update the database.
-        """
-        categories_url = 'https://fr.openfoodfacts.org/categories.json'
-        response = requests.get(categories_url).json()
-        # Browse all categories.
-        print('Database sync started..')
-        print(100 * '=')
-        # Clean the database.
-        self.drop_tables()
-        # Re-insert all categories and their products in the database.
-        for category_number, category in enumerate(response['tags']):
-            self.insert_category(category['name'])
-            self.insert_products(category['products'], category['url'])
-            # Limit category number to 20.
-            if category_number == 20:
-                break
-            print(100 * '=')
-        self.cursor.close()
-        self.database.close()
-        print("Database sync finished")
