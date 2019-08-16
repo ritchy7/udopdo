@@ -165,7 +165,46 @@ class OpenFoodFacts:
                     end = 10
                     start = 0
             else:
-                pass
+                try:
+                    product = next(
+                        product
+                        for product in products
+                        if product['id'] == int(menu_choice)
+                    )
+                    self.show_product(product)
+                except Exception as e:
+                    print(f'{menu_choice} not exist in product list')
+
+    def show_product(self, product):
+        """
+        Show the describe of a product.
+
+        :param product (dict):  Product description.
+        """
+        product_id = product['id']
+        product = '\n'.join([
+            f"{k} - {v}" for k, v in product.items()
+        ])
+        menu_message = f'Would you like to register this product ?\n{product}\n\n'
+        menu_message += f'y - yes | n - no\n\n'
+        menu_message += f'Q - Quitter.\n\n'
+        query = 'INSERT IGNORE INTO History (product_id) VALUES({});'
+        while True:
+            menu_choice = input(menu_message)
+            if menu_choice == 'n':
+                break
+            elif menu_choice == 'Q':
+                self.quit()
+            elif menu_choice == 'y':
+                try:
+                    self.init_connection()
+                    self.cursor.execute(query.format(product_id))
+                    self.database.commit()
+                    self.cursor.close()
+                    self.database.close()
+                    break
+                except Exception as e:
+                    print(f'Error during saving product:\n{e}\n')
 
     def insert_products(self, product_number, url):
         """
@@ -191,21 +230,18 @@ class OpenFoodFacts:
             print(f'Page : {page}')
             response = requests.get(f'{url}/{page}.json').json()
             # Add all products into a huge list.
-            products += [
-                (
-                    p.get('product_name'),
-                    p.get('image_url'),
-                    p['nutrient_levels'].get('salt'),
-                    p['nutrient_levels'].get('fat'),
-                    p['nutrient_levels'].get('sugars'),
-                    p['nutrient_levels'].get('saturated-fat'),
-                    p.get('brands'),
-                    p.get('allergens'),
-                    p.get('nutrition_grades'),
-                    self.category_id
-                )
-                for p in response['products']
-            ]
+            products += [(
+                p.get('product_name'),
+                p.get('image_url'),
+                p['nutrient_levels'].get('salt'),
+                p['nutrient_levels'].get('fat'),
+                p['nutrient_levels'].get('sugars'),
+                p['nutrient_levels'].get('saturated-fat'),
+                p.get('brands'),
+                p.get('allergens'),
+                p.get('nutrition_grades'),
+                self.category_id
+            ) for p in response['products']]
         # Insert all the products for a category into 'Product' table.
         try:
             self.cursor.executemany(products_query, products)
