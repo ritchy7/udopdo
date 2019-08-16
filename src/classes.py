@@ -39,12 +39,12 @@ class OpenFoodFacts:
         drop all tables.
         """
         try:
-            drop_query = 'DELETE FROM {0};'
+            query = 'DELETE FROM {0};'
             reset_auto_increment = 'ALTER TABLE {0} AUTO_INCREMENT = 1;'
             tables = ['History', 'Product', 'Category']
             # Drop the tables and reset the auto increment start number to 1.
             for table in tables:
-                self.cursor.execute(drop_query.format(table))
+                self.cursor.execute(query.format(table))
                 self.cursor.execute(reset_auto_increment.format(table))
                 self.database.commit()
         except Exception as err:
@@ -104,7 +104,7 @@ class OpenFoodFacts:
             f'{k} - {v}' for k, v in dict(self.cursor.fetchall()).items()
         ])
         menu_message = f'Select a category :\n{categories}\n\nQ - Quitter.\n\n'
-        category_query = 'SELECT * FROM Product WHERE category = {};'
+        query = 'SELECT * FROM Product WHERE category = {};'
         # Show all categories.
         while True:
             print(50 * '-')
@@ -116,7 +116,7 @@ class OpenFoodFacts:
             else:
                 # Show all products in a category.
                 try:
-                    self.cursor.execute(category_query.format(menu_choice))
+                    self.cursor.execute(query.format(menu_choice))
                     self.products = self.cursor.fetchall()
                     self.cursor.close()
                     self.database.commit()
@@ -213,7 +213,7 @@ class OpenFoodFacts:
         :param product_number (string):  Number of product.
         :param url (string):             Category url.
         """
-        products_query = """
+        query = """
             INSERT INTO Product (product_name, img_url, salt, fat,
             sugars, saturated_fat, warehouse, allergens, nutrition_grades,
             category)
@@ -244,7 +244,7 @@ class OpenFoodFacts:
             ) for p in response['products']]
         # Insert all the products for a category into 'Product' table.
         try:
-            self.cursor.executemany(products_query, products)
+            self.cursor.executemany(query, products)
             self.database.commit()
         except Exception as e:
             print(f'Error during product insertion:\n{e}\n')
@@ -256,10 +256,10 @@ class OpenFoodFacts:
 
         :param category_name (string):   category's name.
         """
-        categories_query = 'INSERT INTO Category (category_name) VALUES (%s);'
+        query = 'INSERT INTO Category (category_name) VALUES (%s);'
         try:
             # Insert category into the database.
-            self.cursor.execute(categories_query, (category_name,))
+            self.cursor.execute(query, (category_name,))
             self.category_id = self.cursor.lastrowid
             print(f"Category {category_name} sync in progress..")
         except Exception as e:
