@@ -203,7 +203,7 @@ class OpenFoodFacts:
             elif menu_choice == 'Q':
                 self.quit()
             elif menu_choice == 's':
-                pass
+                self.show_substitute(product['id'])
             elif menu_choice == 'r':
                 try:
                     self.init_connection()
@@ -217,6 +217,14 @@ class OpenFoodFacts:
                     print(f'{Fore.RED}Error during saving product:\n{e}\n')
             else:
                 print(f'{Fore.RED}{menu_choice} is an invalid input.')
+
+    def show_substitute(self, product_id):
+        """
+        Show a better product than the one chosen.
+
+        :param product_id (int):   Product id.
+        """
+        pass
 
     def insert_products(self, product_number, url):
         """
