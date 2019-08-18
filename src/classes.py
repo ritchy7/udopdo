@@ -1,8 +1,18 @@
 from constant import MESSAGE_PROMPT
 from math import ceil
 from mysql.connector import connect
+from colorama import (
+    Back,
+    Fore,
+    init,
+    Style
+)
 import requests
 import sys
+
+
+# Coloration
+init(autoreset=True)
 
 
 class OpenFoodFacts:
@@ -24,14 +34,14 @@ class OpenFoodFacts:
             self.database = connect(**self.cinfo)
             self.cursor = self.database.cursor(buffered=True)
         except Exception as err:
-            print(f'Error during the connection:\n{err}\nexit\n')
+            print(f'{Fore.RED}Error during the connection:\n{err}\nexit\n')
             sys.exit(1)
 
     def quit(self):
         """
         Exit the program.
         """
-        print('\nYou\'ve decided to leave\nBye bye\n')
+        print(f'{Fore.YELLOW}\nYou\'ve decided to leave\nBye bye\n')
         sys.exit(0)
 
     def drop_tables(self):
@@ -48,7 +58,7 @@ class OpenFoodFacts:
                 self.cursor.execute(reset_auto_increment.format(table))
                 self.database.commit()
         except Exception as err:
-            print(f'Error during droping tables:\n{err}\nexit\n')
+            print(f'{Fore.RED}Error during droping tables:\n{err}\nexit\n')
             sys.exit(1)
 
     def update_database(self):
@@ -58,7 +68,7 @@ class OpenFoodFacts:
         categories_url = 'https://fr.openfoodfacts.org/categories.json'
         response = requests.get(categories_url).json()
         # Browse all categories.
-        print('Database sync started..')
+        print(f'{Fore.GREEN}Database sync started..')
         print(100 * '=')
         # Clean the database.
         self.drop_tables()
@@ -72,7 +82,7 @@ class OpenFoodFacts:
             print(100 * '=')
         self.cursor.close()
         self.database.close()
-        print("Database sync finished")
+        print(f'{Fore.GREEN}Database sync finished')
 
     def main_selection_menu(self):
         """
@@ -93,7 +103,7 @@ class OpenFoodFacts:
             elif main_menu_choice == 'Q':
                 self.quit()
             else:
-                print(f'\'{main_menu_choice}\' n\'est pas valide.\n')
+                print(f'{Fore.RED}\'{main_menu_choice}\' is not valid.\n')
 
     def category_selection_menu(self):
         """
@@ -112,17 +122,22 @@ class OpenFoodFacts:
             if menu_choice == 'Q':
                 self.quit()
             elif menu_choice not in categories:
-                print(f'category number {menu_choice} is not valid')
+                print(f'{Fore.RED}category number {menu_choice} is not valid')
             else:
                 # Show all products in a category.
                 try:
                     self.cursor.execute(query.format(menu_choice))
-                    self.products = self.cursor.fetchall()
+                    self.products = [{
+                        'id': p[0], 'name': p[1], 'img': p[2], 'salt': p[3],
+                        'fat': p[4], 'sugars': p[5], 'saturated_fat': p[6],
+                        'warehouse': p[7], 'allergens': p[8],
+                        'nutrition grades': p[9]
+                    } for p in self.cursor.fetchall()]
                     self.cursor.close()
                     self.database.commit()
                     self.product_selection_menu()
                 except Exception as e:
-                    print(f'Error during category selection: {e}')
+                    print(f'{Fore.RED}Error during category selection: {e}')
                 self.init_connection()
 
     def product_selection_menu(self):
@@ -130,19 +145,13 @@ class OpenFoodFacts:
         Select a product.
         """
         max_page = len(self.products)
-        products = [{
-            'id': p[0], 'name': p[1], 'img': p[2], 'salt': p[3],
-            'fat': p[4], 'sugars': p[5], 'saturated_fat': p[6],
-            'warehouse': p[7], 'allergens': p[8],
-            'nutrition grades': p[9]
-        } for p in self.products]
         # Show all products per pagination.
         start = 0
         end = 10
         while True:
             print(50 * '-')
             message_products = '\n'.join([
-                f"{p['id']} - {p['name']}" for p in products[start:end]
+                f"{p['id']} - {p['name']}" for p in self.products[start:end]
             ])
             menu_message = f'Select a product:\n{message_products}\n\n'
             menu_message += f'p - previous page | n - next page\n\n'
@@ -168,12 +177,12 @@ class OpenFoodFacts:
                 try:
                     product = next(
                         product
-                        for product in products
+                        for product in self.products
                         if product['id'] == int(menu_choice)
                     )
                     self.show_product(product)
                 except Exception as e:
-                    print(f'{menu_choice} not exist in product list')
+                    print(f'{Fore.RED}{menu_choice} not exist in product list')
 
     def show_product(self, product):
         """
@@ -181,30 +190,33 @@ class OpenFoodFacts:
 
         :param product (dict):  Product description.
         """
-        product_id = product['id']
-        product = '\n'.join([
-            f"{k} - {v}" for k, v in product.items()
-        ])
-        menu_message = f'Would you like to register this product ?\n{product}\n\n'
-        menu_message += f'y - yes | n - no\n\n'
-        menu_message += f'Q - Quitter.\n\n'
+        product_description = '\n'.join(
+            [f"{k} - {v}" for k, v in product.items()]
+        )
+        menu_message = f'{product_description}\n\ns - find a subtitute | '
+        menu_message += 'p - previous page | r - register\n\nQ - Quitter.\n\n'
         query = 'INSERT IGNORE INTO History (product_id) VALUES({});'
         while True:
             menu_choice = input(menu_message)
-            if menu_choice == 'n':
+            if menu_choice == 'p':
                 break
             elif menu_choice == 'Q':
                 self.quit()
-            elif menu_choice == 'y':
+            elif menu_choice == 's':
+                pass
+            elif menu_choice == 'r':
                 try:
                     self.init_connection()
-                    self.cursor.execute(query.format(product_id))
+                    self.cursor.execute(query.format(product['id']))
                     self.database.commit()
                     self.cursor.close()
                     self.database.close()
+                    print(f"{Fore.GREEN}Product {product['id']} registered !\n")
                     break
                 except Exception as e:
-                    print(f'Error during saving product:\n{e}\n')
+                    print(f'{Fore.RED}Error during saving product:\n{e}\n')
+            else:
+                print(f'{Fore.RED}{menu_choice} is an invalid input.')
 
     def insert_products(self, product_number, url):
         """
@@ -247,7 +259,7 @@ class OpenFoodFacts:
             self.cursor.executemany(query, products)
             self.database.commit()
         except Exception as e:
-            print(f'Error during product insertion:\n{e}\n')
+            print(f'{Fore.RED}Error during product insertion:\n{e}\n')
             sys.exit(1)
 
     def insert_category(self, category_name):
@@ -261,7 +273,7 @@ class OpenFoodFacts:
             # Insert category into the database.
             self.cursor.execute(query, (category_name,))
             self.category_id = self.cursor.lastrowid
-            print(f"Category {category_name} sync in progress..")
+            print(f'{Fore.YELLOW}Category {category_name} sync in progress..')
         except Exception as e:
-            print(f'Error during category insertion:\n{e}\nexit\n')
+            print(f'{Fore.RED}Error during category insertion:\n{e}\nexit\n')
             sys.exit(1)
