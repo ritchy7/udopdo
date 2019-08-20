@@ -162,17 +162,13 @@ class OpenFoodFacts:
             elif menu_choice == 'P':
                 break
             elif menu_choice == 'n':
-                end += 10
-                start += 10
+                end, start = end + 10, start + 10
                 if end > max_page:
-                    end = max_page
-                    start = max_page - 10
+                    end, start = max_page, max_page - 10
             elif menu_choice == 'p':
-                start -= 10
-                end -= 10
+                end, start = end - 10, start - 10
                 if start < 0:
-                    end = 10
-                    start = 0
+                    end, start = 10, 0
             else:
                 try:
                     product = next(
