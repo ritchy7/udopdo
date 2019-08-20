@@ -5,7 +5,10 @@
 /*CREATE USER 'vagrant'@'localhost' IDENTIFIED BY '1234';
 GRANT ALL PRIVILEGES ON openfoodfacts.* TO 'vagrant'@'localhost' IDENTIFIED BY '1234';*/
 
+/* ****************** */
 /* Tables creation */
+/* ****************** */
+/* Category */
 CREATE TABLE IF NOT EXISTS Category (
     id SMALLINT UNSIGNED AUTO_INCREMENT,
     category_name VARCHAR(200),
@@ -13,6 +16,7 @@ CREATE TABLE IF NOT EXISTS Category (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
+/* Product */
 CREATE TABLE IF NOT EXISTS Product (
     id SMALLINT UNSIGNED AUTO_INCREMENT,
     product_name VARCHAR(200),
@@ -32,6 +36,7 @@ CREATE TABLE IF NOT EXISTS Product (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
+/* History */
 CREATE TABLE IF NOT EXISTS History (
     id SMALLINT UNSIGNED AUTO_INCREMENT,
     product_id SMALLINT UNSIGNED UNIQUE NOT NULL,
