@@ -6,9 +6,14 @@ MESSAGE_PROMPT = '-------------------------------------------\n'\
     '-------------------------------------------\n'
 
 
+CATEGORIES_URL = 'https://fr.openfoodfacts.org/categories.json'
+
 CINFO = {
     'host': 'localhost',
     'user': 'vagrant',
     'passwd': '1234',
     'database': 'openfoodfacts'
 }
+
+SHOW_PRODUCT_PROMPT = ('\n\ns - find a subtitute | p - previous page | r -'
+                        ' register\n\nQ - Quitter.\n\n')
