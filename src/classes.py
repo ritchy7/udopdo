@@ -1,4 +1,8 @@
-from constant import MESSAGE_PROMPT
+from constant import (
+    CATEGORIES_URL,
+    MESSAGE_PROMPT,
+    SHOW_PRODUCT_PROMPT
+)
 from math import ceil
 from mysql.connector import connect
 from colorama import (
@@ -46,7 +50,7 @@ class OpenFoodFacts:
 
     def drop_tables(self):
         """
-        drop all tables.
+        Delete the data from each table.
         """
         try:
             query = 'DELETE FROM {0};'
@@ -63,10 +67,10 @@ class OpenFoodFacts:
 
     def update_database(self):
         """
-        Update the database.
+        Update the database, delete the data from each table
+        and replenishing them.
         """
-        categories_url = 'https://fr.openfoodfacts.org/categories.json'
-        response = requests.get(categories_url).json()
+        response = requests.get(CATEGORIES_URL).json()
         # Browse all categories.
         print(f'{Fore.GREEN}Database sync started..')
         print(100 * '=')
@@ -88,26 +92,20 @@ class OpenFoodFacts:
         """
         Main selection menu.
         """
-        main_menu_choice = None
+        choice = None
         while True:
-            main_menu_choice = input(MESSAGE_PROMPT)
-            if main_menu_choice == '1':
-                self.main_menu_choice = 1
+            choice = input(MESSAGE_PROMPT)
+            if choice == '1' or choice == '2' or choice == '3':
+                self.main_menu_choice = int(choice)
                 break
-            elif main_menu_choice == '2':
-                self.main_menu_choice = 2
-                break
-            elif main_menu_choice == '3':
-                self.main_menu_choice = 3
-                break
-            elif main_menu_choice == 'Q':
+            elif choice == 'Q':
                 self.quit()
             else:
-                print(f'{Fore.RED}\'{main_menu_choice}\' is not valid.\n')
+                print(f'{Fore.RED}\'{choice}\' is not valid.\n')
 
     def category_selection_menu(self):
         """
-        Select a category.
+        Category selection menu.
         """
         self.cursor.execute('SELECT * FROM Category;')
         categories = '\n'.join([
@@ -142,33 +140,34 @@ class OpenFoodFacts:
 
     def product_selection_menu(self):
         """
-        Select a product.
+        Product selection menu, displayed in pagination.
+        (20 products per page)
         """
         max_page = len(self.products)
         # Show all products per pagination.
         start = 0
-        end = 10
+        end = 20
         while True:
             print(50 * '-')
             message_products = '\n'.join([
                 f"{p['id']} - {p['name']}" for p in self.products[start:end]
             ])
-            menu_message = f'Select a product:\n{message_products}\n\n'
-            menu_message += f'p - previous page | n - next page\n\n'
-            menu_message += f'P - Back to categorie menu\nQ - Quitter.\n\n'
+            menu_message = (f'Select a product:\n{message_products}\n\n'
+                            'p - previous page | n - next page\n\n'
+                            'P - Back to categorie menu\nQ - Quitter.\n\n')
             menu_choice = input(menu_message)
             if menu_choice == 'Q':
                 self.quit()
             elif menu_choice == 'P':
                 break
             elif menu_choice == 'n':
-                end, start = end + 10, start + 10
+                end, start = end + 20, start + 20
                 if end > max_page:
-                    end, start = max_page, max_page - 10
+                    end, start = max_page, max_page - 20
             elif menu_choice == 'p':
-                end, start = end - 10, start - 10
+                end, start = end - 20, start - 20
                 if start < 0:
-                    end, start = 10, 0
+                    end, start = 20, 0
             else:
                 try:
                     product = next(
@@ -182,18 +181,18 @@ class OpenFoodFacts:
 
     def show_product(self, product):
         """
-        Show the describe of a product.
+        Shows the complete description of a given product in parameter.
+        (id, name, img, salt, salt, fat, sugars, satured fat, warehouse,
+         allergens and nutrtion grade)
 
         :param product (dict):  Product description.
         """
         product_description = '\n'.join(
             [f"{k} - {v}" for k, v in product.items()]
         )
-        menu_message = f'{product_description}\n\ns - find a subtitute | '
-        menu_message += 'p - previous page | r - register\n\nQ - Quitter.\n\n'
         query = 'INSERT IGNORE INTO History (product_id) VALUES({});'
         while True:
-            menu_choice = input(menu_message)
+            menu_choice = input(product_description + SHOW_PRODUCT_PROMPT)
             if menu_choice == 'p':
                 break
             elif menu_choice == 'Q':
