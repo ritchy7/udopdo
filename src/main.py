@@ -1,3 +1,4 @@
+# Local libraries.
 from classes import OpenFoodFacts
 from constant import CINFO
 
