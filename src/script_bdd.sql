@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS Product (
     warehouse TEXT,
     allergens TEXT,
     nutrition_grades CHAR(1),
-    category SMALLINT UNSIGNED NOT NULL,
+    category_id SMALLINT UNSIGNED NOT NULL,
     CONSTRAINT fk_category_id
         FOREIGN KEY (category)
         REFERENCES Category(id),
