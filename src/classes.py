@@ -30,6 +30,7 @@ class OpenFoodFacts:
         self.database = None
         self.products = None
         self.clear = None
+        self.unwanted = []
 
     def init_connection(self):
         """
@@ -51,7 +52,8 @@ class OpenFoodFacts:
         print(f'{Fore.YELLOW}\nYou\'ve decided to leave\nBye bye\n')
         sys.exit(0)
 
-    def clear_screen(self):
+    @staticmethod
+    def clear_screen():
         """
         Clear the terminal.
         """
@@ -125,12 +127,14 @@ class OpenFoodFacts:
         """
         Category selection menu.
         """
+        # Get the categories from the database.
         self.cursor.execute('SELECT * FROM Category;')
+        # Transform the response to a string list.
         categories = '\n'.join([
             f'{k} - {v}' for k, v in dict(self.cursor.fetchall()).items()
         ])
         menu_message = f'Select a category :\n{categories}\n\nQ - Quitter.\n\n'
-        query = 'SELECT * FROM Product WHERE category = {};'
+        query = 'SELECT * FROM Product WHERE category_id = {};'
         error = False
         # Show all categories.
         while True:
@@ -153,13 +157,14 @@ class OpenFoodFacts:
                         'id': p[0], 'name': p[1], 'img': p[2], 'salt': p[3],
                         'fat': p[4], 'sugars': p[5], 'saturated_fat': p[6],
                         'warehouse': p[7], 'allergens': p[8],
-                        'nutrition grades': p[9]
+                        'nutrition_grades': p[9]
                     } for p in self.cursor.fetchall()]
                     self.cursor.close()
                     self.database.commit()
                     self.product_selection_menu()
                 except Exception as e:
-                    print(f'{Fore.RED}Error during category selection: {e}')
+                    error = True
+                    print(f'{Fore.RED}Error during category selection:\n{e}')
                 self.init_connection()
 
     def product_selection_menu(self):
@@ -205,10 +210,10 @@ class OpenFoodFacts:
                         if product['id'] == int(menu_choice)
                     )
                     self.show_product(product)
-                except Exception:
+                except Exception as e:
                     error = True
                     self.clear_screen()
-                    print(f'{Fore.RED}{menu_choice} not exist in product list')
+                    print(f'{Fore.RED}{menu_choice} not exist in product list: {e}')
 
     def show_product(self, product):
         """
@@ -229,11 +234,15 @@ class OpenFoodFacts:
                 error = False
             menu_choice = input(product_description + SHOW_PRODUCT_PROMPT)
             if menu_choice == 'p':
+                self.clear_screen()
                 break
             elif menu_choice == 'Q':
                 self.quit()
             elif menu_choice == 's':
-                self.show_substitute(product['id'])
+                # Add product id to a list of unwanted products.
+                self.unwanted.append(product['id'])
+                self.show_substitute()
+                break
             elif menu_choice == 'r':
                 try:
                     self.init_connection()
@@ -251,13 +260,22 @@ class OpenFoodFacts:
                 self.clear_screen()
                 print(f'{Fore.RED}{menu_choice} is an invalid input.')
 
-    def show_substitute(self, product_id):
+    def show_substitute(self):
         """
         Show a better product than the one chosen.
-
-        :param product_id (int):   Product id.
         """
-        pass
+        # Sort the list by nutrition grades.
+        if len(self.products) - len(self.unwanted) > 1:
+            # Get products sorted by nutrition grades.
+            products = [
+                p for p in sorted(
+                    self.products,
+                    key = lambda p: p.get('nutrition_grades')
+                )
+                if p['id'] not in self.unwanted and p['nutrition_grades'] != ''
+            ]
+            # Show a substitute.
+            self.show_product(products[0])
 
     def insert_products(self, product_number, url):
         """
@@ -269,7 +287,7 @@ class OpenFoodFacts:
         query = """
             INSERT INTO Product (product_name, img_url, salt, fat,
             sugars, saturated_fat, warehouse, allergens, nutrition_grades,
-            category)
+            category_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         products = list()
@@ -284,15 +302,15 @@ class OpenFoodFacts:
             response = requests.get(f'{url}/{page}.json').json()
             # Add all products into a huge list.
             products += [(
-                p.get('product_name'),
-                p.get('image_url'),
-                p['nutrient_levels'].get('salt'),
-                p['nutrient_levels'].get('fat'),
-                p['nutrient_levels'].get('sugars'),
-                p['nutrient_levels'].get('saturated-fat'),
-                p.get('brands'),
-                p.get('allergens'),
-                p.get('nutrition_grades'),
+                p.get('product_name', ''),
+                p.get('image_url', ''),
+                p['nutrient_levels'].get('salt', ''),
+                p['nutrient_levels'].get('fat', ''),
+                p['nutrient_levels'].get('sugars', ''),
+                p['nutrient_levels'].get('saturated-fat', ''),
+                p.get('brands', ''),
+                p.get('allergens', ''),
+                p.get('nutrition_grades', ''),
                 self.category_id
             ) for p in response['products']]
         # Insert all the products for a category into 'Product' table.
