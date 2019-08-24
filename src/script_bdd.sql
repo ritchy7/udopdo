@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS Product (
     nutrition_grades CHAR(1),
     category_id SMALLINT UNSIGNED NOT NULL,
     CONSTRAINT fk_category_id
-        FOREIGN KEY (category)
+        FOREIGN KEY (category_id)
         REFERENCES Category(id),
 
     PRIMARY KEY (id)
