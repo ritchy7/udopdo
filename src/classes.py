@@ -12,7 +12,8 @@ from mysql.connector import connect
 from constant import (
     CATEGORIES_URL,
     MESSAGE_PROMPT,
-    SHOW_PRODUCT_PROMPT
+    PRODUCT_PROMPT,
+    PRODUCT_PROMPT_HISTORICAL
 )
 
 
@@ -28,7 +29,7 @@ class OpenFoodFacts:
         self.cinfo = cinfo
         self.cursor = None
         self.database = None
-        self.products = None
+        self.products = []
         self.clear = None
         self.unwanted = []
 
@@ -44,11 +45,12 @@ class OpenFoodFacts:
             print(f'{Fore.RED}Error during the connection:\n{err}\nexit\n')
             sys.exit(1)
 
-    def quit(self):
+    @classmethod
+    def quit(cls):
         """
         Exit the program.
         """
-        self.clear_screen()
+        cls.clear_screen()
         print(f'{Fore.YELLOW}\nYou\'ve decided to leave\nBye bye\n')
         sys.exit(0)
 
@@ -58,6 +60,23 @@ class OpenFoodFacts:
         Clear the terminal.
         """
         os.system('cls' if os.name == 'nt' else 'clear')
+
+    @staticmethod
+    def transform_to_dict(product):
+        """
+        print(self.pr)
+        Transform a tuple to a dictionnary and add it to a list of
+        products.
+
+        :param product (tuple): Product values.
+        :return (dict):         Product transformed to a dict
+        """
+        return {
+            'id': product[0], 'name': product[1], 'img': product[2],
+            'salt': product[3], 'fat': product[4], 'sugars': product[5],
+            'saturated_fat': product[6], 'warehouse': product[7],
+            'allergens': product[8], 'nutrition_grades': product[9]
+        }
 
     def drop_tables(self):
         """
@@ -107,10 +126,10 @@ class OpenFoodFacts:
         Main selection menu.
         """
         choice = None
-        self.clear = None
+        self.clear = False
         while True:
             if not self.clear:
-                self.clear = True
+                self.clear = False
                 self.clear_screen()
             choice = input(MESSAGE_PROMPT)
             if choice == '1' or choice == '2' or choice == '3':
@@ -119,9 +138,9 @@ class OpenFoodFacts:
             elif choice == 'Q':
                 self.quit()
             else:
-                self.clear = False
+                self.clear = True
                 self.clear_screen()
-                print(f'{Fore.RED}\'{choice}\' is not valid.\n')
+                print(f'{Fore.RED}Selection menu not valid: \'{choice}\'')
 
     def category_selection_menu(self):
         """
@@ -135,35 +154,34 @@ class OpenFoodFacts:
         ])
         menu_message = f'Select a category :\n{categories}\n\nQ - Quitter.\n\n'
         query = 'SELECT * FROM Product WHERE category_id = {};'
-        error = False
+        self.clear = False
         # Show all categories.
         while True:
-            if not error:
-                error = False
+            if not self.clear:
+                self.clear = False
                 self.clear_screen()
-                print(50 * '-')
+            print(50 * '-')
             menu_choice = input(menu_message)
             if menu_choice == 'Q':
                 self.quit()
             elif menu_choice not in categories:
-                error = True
+                self.clear = True
                 self.clear_screen()
-                print(f'{Fore.RED}category number {menu_choice} is not valid')
+                print(f'{Fore.RED}Category number doesn\'t exist: {menu_choice}')
             else:
                 # Show all products in a category.
                 try:
                     self.cursor.execute(query.format(menu_choice))
-                    self.products = [{
-                        'id': p[0], 'name': p[1], 'img': p[2], 'salt': p[3],
-                        'fat': p[4], 'sugars': p[5], 'saturated_fat': p[6],
-                        'warehouse': p[7], 'allergens': p[8],
-                        'nutrition_grades': p[9]
-                    } for p in self.cursor.fetchall()]
+                    self.products = [
+                        self.transform_to_dict(p) for p in self.cursor.fetchall()
+                    ]
                     self.cursor.close()
                     self.database.commit()
+                    self.clear_screen()
                     self.product_selection_menu()
                 except Exception as e:
-                    error = True
+                    self.clear = True
+                    self.clear_screen()
                     print(f'{Fore.RED}Error during category selection:\n{e}')
                 self.init_connection()
 
@@ -176,11 +194,11 @@ class OpenFoodFacts:
         # Show all products per pagination.
         start = 0
         end = 20
-        error = False
+        self.clear = True
         while True:
-            if not error:
+            if not self.clear:
+                self.clear = False
                 self.clear_screen()
-                error = False
             print(50 * '-')
             message_products = '\n'.join([
                 f"{p['id']} - {p['name']}" for p in self.products[start:end]
@@ -195,10 +213,12 @@ class OpenFoodFacts:
                 self.clear_screen()
                 break
             elif menu_choice == 'n':
+                self.clear_screen()
                 end, start = end + 20, start + 20
                 if end > max_page:
                     end, start = max_page, max_page - 20
             elif menu_choice == 'p':
+                self.clear_screen()
                 end, start = end - 20, start - 20
                 if start < 0:
                     end, start = 20, 0
@@ -209,56 +229,71 @@ class OpenFoodFacts:
                         for product in self.products
                         if product['id'] == int(menu_choice)
                     )
-                    self.show_product(product)
+                    self.show_product(product, False)
                 except Exception as e:
-                    error = True
+                    self.clear = True
                     self.clear_screen()
                     print(f'{Fore.RED}{menu_choice} not exist in product list: {e}')
 
-    def show_product(self, product):
+    def show_product(self, product, historical_mode):
         """
         Shows the complete description of a given product in parameter.
         (id, name, img, salt, salt, fat, sugars, satured fat, warehouse,
          allergens and nutrtion grade)
 
-        :param product (dict):  Product description.
+        :param product (dict):              Product description.
+        :param historical_mode (boolean):   Used to choose if it's the
+                                            historical mode or not.
         """
         product_description = '\n'.join(
             [f"{k} - {v}" for k, v in product.items()]
         )
         query = 'INSERT IGNORE INTO History (product_id) VALUES({});'
-        error = False
+        menu_options = PRODUCT_PROMPT_HISTORICAL if historical_mode else PRODUCT_PROMPT
+        self.clear = False
         while True:
-            if not error:
+            if not self.clear:
                 self.clear_screen()
-                error = False
-            menu_choice = input(product_description + SHOW_PRODUCT_PROMPT)
-            if menu_choice == 'p':
-                self.clear_screen()
-                break
-            elif menu_choice == 'Q':
+                self.clear = False
+            menu_choice = input(product_description + menu_options)
+            if menu_choice == 'Q':
                 self.quit()
-            elif menu_choice == 's':
-                # Add product id to a list of unwanted products.
-                self.unwanted.append(product['id'])
-                self.show_substitute()
-                break
-            elif menu_choice == 'r':
-                try:
-                    self.init_connection()
-                    self.cursor.execute(query.format(product['id']))
-                    self.database.commit()
-                    self.cursor.close()
-                    self.database.close()
-                    self.clear_screen()
-                    print(f"{Fore.GREEN}Product {product['id']} registered !\n")
-                    break
-                except Exception as e:
-                    print(f'{Fore.RED}Error during saving product:\n{e}\n')
-            else:
-                error = True
+            elif menu_choice == 'p':
                 self.clear_screen()
-                print(f'{Fore.RED}{menu_choice} is an invalid input.')
+                break
+            if historical_mode:
+                if menu_choice == 'd':
+                    try:
+                        query = 'DELETE FROM History WHERE product_id = {}'
+                        self.cursor.execute(query.format(product['id']))
+                        self.database.commit()
+                        self.products.remove(product)
+                        break
+                    except Exception as e:
+                        print(f'{Fore.RED}Error during deleting product:\n{e}\n')
+            else:
+                if menu_choice == 's':
+                    # Add product id to a list of unwanted products.
+                    self.unwanted.append(product['id'])
+                    self.show_substitute()
+                    break
+                elif menu_choice == 'r':
+                    try:
+                        # Register the product to the database.
+                        self.init_connection()
+                        self.cursor.execute(query.format(product['id']))
+                        self.database.commit()
+                        self.cursor.close()
+                        self.database.close()
+                        self.clear_screen()
+                        print(f"{Fore.GREEN}Product {product['id']} registered !\n")
+                        break
+                    except Exception as e:
+                        print(f'{Fore.RED}Error during saving product:\n{e}\n')
+                else:
+                    self.clear = True
+                    self.clear_screen()
+                    print(f'{Fore.RED}{menu_choice} is an invalid input.')
 
     def show_substitute(self):
         """
@@ -275,7 +310,7 @@ class OpenFoodFacts:
                 if p['id'] not in self.unwanted and p['nutrition_grades'] != ''
             ]
             # Show a substitute.
-            self.show_product(products[0])
+            self.show_product(products[0], False)
 
     def insert_products(self, product_number, url):
         """
@@ -290,19 +325,19 @@ class OpenFoodFacts:
             category_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
-        products = list()
         total_page = ceil(product_number / 20)
         # Limit to 200 products per category.
         if total_page > 10:
             total_page = 11
         page = 1
         # Browse all pages of a category.
+        products = list()
         for page in range(1, total_page):
             print(f'Page : {page}')
             response = requests.get(f'{url}/{page}.json').json()
             # Add all products into a huge list.
             products += [(
-                p.get('product_name', ''),
+                p.get('product_name', 'NONAME'),
                 p.get('image_url', ''),
                 p['nutrient_levels'].get('salt', ''),
                 p['nutrient_levels'].get('fat', ''),
@@ -320,6 +355,60 @@ class OpenFoodFacts:
         except Exception as e:
             print(f'{Fore.RED}Error during product insertion:\n{e}\n')
             sys.exit(1)
+
+    def show_saved_products(self):
+        """
+        Show the saved products.
+        """
+        query = '''
+            SELECT
+                Product.id,
+                Product.product_name,
+                Product.img_url,
+                Product.salt,
+                Product.fat,
+                Product.sugars,
+                Product.saturated_fat,
+                Product.warehouse,
+                Product.allergens,
+                Product.nutrition_grades
+            FROM Product
+            RIGHT JOIN History
+            ON Product.id = History.product_id;
+        '''
+        # Get all the saved products.
+        self.cursor.execute(query)
+        # Transform each tuple to a dictionary then put it on a list.
+        self.products = [
+            self.transform_to_dict(p) for p in self.cursor.fetchall()
+        ]
+        self.clear = False
+        while True:
+            try:
+                if self.clear:
+                    self.clear = False
+                    self.clear_screen()
+                # Join all product to string separate by a carriage
+                # return.
+                message_products = '\n'.join([
+                    f"{p['id']} - {p['name']}" for p in self.products
+                ])
+                menu_message = ('Select a product from your history:\n'
+                                f'{message_products}\nQ - Quitter\n\n')
+                choice = input(menu_message)
+                if choice == 'Q':
+                    self.quit()
+                else:
+                    # Get the product from the list then show the
+                    # description of it.
+                    product = next(
+                        p for p in self.products
+                        if p['id'] == int(choice)
+                    )
+                    self.show_product(product, True)
+            except Exception:
+                self.clear = True
+                print(f'{Fore.RED}Invalid input: {choice}')
 
     def insert_category(self, category_name):
         """

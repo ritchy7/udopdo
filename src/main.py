@@ -13,6 +13,6 @@ if __name__ == '__main__':
     if main_menu_choice == 1:
         openfoodfacts.category_selection_menu()
     elif main_menu_choice == 2:
-        pass
+        openfoodfacts.show_saved_products()
     elif main_menu_choice == 3:
         openfoodfacts.update_database()
