@@ -263,14 +263,8 @@ class OpenFoodFacts:
                 break
             if historical_mode:
                 if menu_choice == 'd':
-                    try:
-                        query = 'DELETE FROM History WHERE product_id = {}'
-                        self.cursor.execute(query.format(product['id']))
-                        self.database.commit()
-                        self.products.remove(product)
-                        break
-                    except Exception as e:
-                        print(f'{Fore.RED}Error during deleting product:\n{e}\n')
+                    self.delete_product(product)
+                    break
             else:
                 if menu_choice == 's':
                     # Add product id to a list of unwanted products.
@@ -355,6 +349,20 @@ class OpenFoodFacts:
         except Exception as e:
             print(f'{Fore.RED}Error during product insertion:\n{e}\n')
             sys.exit(1)
+
+    def delete_product(self, product):
+        """
+        Delete product from the history table.
+
+        :param dict:    Product.
+        """
+        query = 'DELETE FROM History WHERE product_id = {}'
+        try:
+            self.cursor.execute(query.format(product['id']))
+            self.database.commit()
+            self.products.remove(product)
+        except Exception as e:
+            print(f'{Fore.RED}Error during deleting product:\n{e}\n')
 
     def show_saved_products(self):
         """
