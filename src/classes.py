@@ -64,7 +64,6 @@ class OpenFoodFacts:
     @staticmethod
     def transform_to_dict(product):
         """
-        print(self.pr)
         Transform a tuple to a dictionnary and add it to a list of
         products.
 
