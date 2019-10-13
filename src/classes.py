@@ -70,8 +70,9 @@ class OpenFoodFacts:
         :param product (tuple): Product values.
         :return (dict):         Product transformed to a dict
         """
+        print('Product:', product)
         return {
-            'id': product[0], 'name': product[1], 'img': product[2],
+            'id': product[0], 'name': product[1], 'product_url': product[2],
             'salt': product[3], 'fat': product[4], 'sugars': product[5],
             'saturated_fat': product[6], 'warehouse': product[7],
             'allergens': product[8], 'nutrition_grades': product[9]
@@ -109,11 +110,11 @@ class OpenFoodFacts:
         self.drop_tables()
         # Re-insert all categories and their products in the database.
         for category_number, category in enumerate(response['tags']):
+            # Limit category number to 20.
+            if category_number > 19:
+                break
             self.insert_category(category['name'])
             self.insert_products(category['products'], category['url'])
-            # Limit category number to 20.
-            if category_number == 20:
-                break
             print(100 * '=')
         self.cursor.close()
         self.database.close()
@@ -313,7 +314,7 @@ class OpenFoodFacts:
         :param url (string):             Category url.
         """
         query = """
-            INSERT INTO Product (product_name, img_url, salt, fat,
+            INSERT INTO Product (product_name, product_url, salt, fat,
             sugars, saturated_fat, warehouse, allergens, nutrition_grades,
             category_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
@@ -331,7 +332,7 @@ class OpenFoodFacts:
             # Add all products into a huge list.
             products += [(
                 p.get('product_name', 'NONAME'),
-                p.get('image_url', ''),
+                p.get('product_url', ''),
                 p['nutrient_levels'].get('salt', ''),
                 p['nutrient_levels'].get('fat', ''),
                 p['nutrient_levels'].get('sugars', ''),
@@ -371,7 +372,7 @@ class OpenFoodFacts:
             SELECT
                 Product.id,
                 Product.product_name,
-                Product.img_url,
+                Product.product_url,
                 Product.salt,
                 Product.fat,
                 Product.sugars,
