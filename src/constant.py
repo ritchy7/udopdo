@@ -22,8 +22,8 @@ PRODUCT_PROMPT = ('\n\ns - find a subtitute | p - previous page | r -'
                   ' register\n\nQ - Quitter.\n\n')
 
 #  History product prompt message.
-PRODUCT_PROMPT_HISTORICAL = ('\n\nd - delete the product | p - back to'
-                             ' history | Q - Quitter.\n\n')
+PRODUCT_PROMPT_HISTORICAL = ('\n\nd - delete the product | P - back to'
+                             ' history\n\n')
 
 # Query to retrieve all product choiced.
 GET_HISTORY_QUERY = '''
