@@ -70,9 +70,8 @@ class OpenFoodFacts:
         :param product (tuple): Product values.
         :return (dict):         Product transformed to a dict
         """
-        print('Product:', product)
         return {
-            'id': product[0], 'name': product[1], 'product_url': product[2],
+            'id': product[0], 'name': product[1], 'url': product[2],
             'salt': product[3], 'fat': product[4], 'sugars': product[5],
             'saturated_fat': product[6], 'warehouse': product[7],
             'allergens': product[8], 'nutrition_grades': product[9]
@@ -137,6 +136,7 @@ class OpenFoodFacts:
                 break
             elif choice == 'Q':
                 self.quit()
+                break
             else:
                 self.clear = True
                 self.clear_screen()
@@ -163,7 +163,7 @@ class OpenFoodFacts:
             print(50 * '-')
             menu_choice = input(menu_message)
             if menu_choice == 'Q':
-                self.quit()
+                break
             elif menu_choice not in categories:
                 self.clear = True
                 self.clear_screen()
@@ -208,7 +208,7 @@ class OpenFoodFacts:
                             'P - Back to categorie menu\nQ - Quitter.\n\n')
             menu_choice = input(menu_message)
             if menu_choice == 'Q':
-                self.quit()
+                break
             elif menu_choice == 'P':
                 self.clear_screen()
                 break
@@ -257,7 +257,7 @@ class OpenFoodFacts:
                 self.clear = False
             menu_choice = input(product_description + menu_options)
             if menu_choice == 'Q':
-                self.quit()
+                break
             elif menu_choice == 'p':
                 self.clear_screen()
                 break
@@ -332,7 +332,7 @@ class OpenFoodFacts:
             # Add all products into a huge list.
             products += [(
                 p.get('product_name', 'NONAME'),
-                p.get('product_url', ''),
+                p.get('url', ''),
                 p['nutrient_levels'].get('salt', ''),
                 p['nutrient_levels'].get('fat', ''),
                 p['nutrient_levels'].get('sugars', ''),
@@ -405,7 +405,8 @@ class OpenFoodFacts:
                                 f'{message_products}\nQ - Quitter\n\n')
                 choice = input(menu_message)
                 if choice == 'Q':
-                    self.quit()
+
+                    break
                 else:
                     # Get the product from the list then show the
                     # description of it.
