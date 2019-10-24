@@ -281,7 +281,7 @@ class OpenFoodFacts:
                 self.clear_screen()
                 self.clear = False
             menu_choice = input(product_description + menu_options)
-            if menu_choice == 'Q':
+            if menu_choice == 'Q' and not historical_mode:
                 self.clear_screen()
                 break
             elif menu_choice == 'P':
@@ -406,6 +406,8 @@ class OpenFoodFacts:
             self.database.commit()
             # Delete the product within the product list.
             self.products.remove(product)
+            self.clear_screen()
+            print(f"{Fore.GREEN}Product {product['id']} deleted successfully.\n\n")
         except Exception as e:
             print(f'{Fore.RED}Error during deleting product:\n{e}\n')
 
